@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEXORA — Luxury Merchandise | Premium Store</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Cormorant+Garamond:wght@300;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#d4af37;
+    --gold-light:#f5d97a;
+    --cyan:#00e5ff;
+    --bg:#05060a;
+    --bg2:#0b0d14;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:#eaeaea;font-family:'Inter',sans-serif;overflow-x:hidden;cursor:none;}
+  .font-display{font-family:'Orbitron',sans-serif;letter-spacing:.08em;}
+  .font-serif{font-family:'Cormorant Garamond',serif;}
+
+  /* Custom cursor */
+  .cursor-dot,.cursor-ring{position:fixed;pointer-events:none;z-index:9999;border-radius:50%;transform:translate(-50%,-50%);transition:opacity .3s;}
+  .cursor-dot{width:6px;height:6px;background:var(--gold);box-shadow:0 0 12px var(--gold);}
+  .cursor-ring{width:40px;height:40px;border:1px solid rgba(212,175,55,.6);transition:transform .15s ease-out, width .2s, height .2s, border-color .2s;}
+  .cursor-ring.hover{width:60px;height:60px;border-color:var(--cyan);background:rgba(0,229,255,.06);}
+
+  /* 3D canvas bg */
+  #bg-canvas{position:fixed;inset:0;z-index:0;}
+
+  /* Animated gradient orbs */
+  .orb{position:fixed;border-radius:50%;filter:blur(100px);opacity:.5;z-index:1;pointer-events:none;animation:floatOrb 20s ease-in-out infinite;}
+  .orb1{width:500px;height:500px;background:radial-gradient(circle,rgba(212,175,55,.35),transparent 70%);top:-100px;left:-100px;}
+  .orb2{width:600px;height:600px;background:radial-gradient(circle,rgba(0,229,255,.3),transparent 70%);bottom:-200px;right:-150px;animation-delay:-7s;}
+  .orb3{width:400px;height:400px;background:radial-gradient(circle,rgba(150,50,255,.25),transparent 70%);top:40%;left:40%;animation-delay:-14s;}
+  @keyframes floatOrb{
+    0%,100%{transform:translate(0,0) scale(1);}
+    33%{transform:translate(80px,-60px) scale(1.15);}
+    66%{transform:translate(-60px,80px) scale(.9);}
+  }
+
+  /* Grid noise overlay */
+  .grid-overlay{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background-image:linear-gradient(rgba(212,175,55,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(212,175,55,.04) 1px,transparent 1px);
+    background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%);}
+
+  .content{position:relative;z-index:10;}
+
+  /* Logo shimmer */
+  .logo-text{
+    background:linear-gradient(90deg,#d4af37 0%,#fff7d6 25%,#d4af37 50%,#8b6914 75%,#d4af37 100%);
+    background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shimmer 4s linear infinite;filter:drop-shadow(0 0 14px rgba(212,175,55,.35));
+  }
+  @keyframes shimmer{to{background-position:200% center;}}
+
+  /* Glass card */
+  .glass{background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(212,175,55,.18);box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);}
+  .glass:hover{border-color:rgba(212,175,55,.5);box-shadow:0 20px 60px rgba(212,175,55,.15),inset 0 1px 0 rgba(255,255,255,.1);}
+
+  /* 3D tilt product card */
+  .tilt-card{transform-style:preserve-3d;transition:transform .2s ease-out;}
+  .tilt-inner{transform-style:preserve-3d;}
+  .tilt-inner > *{transform:translateZ(0);}
+  .tilt-inner .pop{transform:translateZ(40px);}
+  .tilt-inner .pop2{transform:translateZ(20px);}
+
+  /* Button */
+  .btn-gold{position:relative;background:linear-gradient(135deg,#d4af37,#f5d97a,#b8860b);color:#0a0a0a;font-weight:600;letter-spacing:.1em;overflow:hidden;transition:transform .3s;}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(212,175,55,.45);}
+  .btn-gold::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.5),transparent);transform:translateX(-100%);transition:transform .6s;}
+  .btn-gold:hover::before{transform:translateX(100%);}
+
+  .btn-outline{border:1px solid rgba(212,175,55,.4);color:var(--gold-light);background:transparent;transition:all .3s;letter-spacing:.1em;}
+  .btn-outline:hover{background:rgba(212,175,55,.1);border-color:var(--gold);box-shadow:0 0 20px rgba(212,175,55,.2);}
+
+  /* Marquee */
+  .marquee{overflow:hidden;white-space:nowrap;border-top:1px solid rgba(212,175,55,.15);border-bottom:1px solid rgba(212,175,55,.15);background:linear-gradient(90deg,transparent,rgba(212,175,55,.04),transparent);}
+  .marquee-track{display:inline-block;animation:marq 30s linear infinite;}
+  @keyframes marq{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  /* Slider */
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease-in-out,transform 1.2s ease-in-out;transform:scale(1.05);}
+  .slide.active{opacity:1;transform:scale(1);}
+
+  /* Floating tag */
+  .tag-gold{background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(212,175,55,.05));border:1px solid rgba(212,175,55,.5);color:var(--gold-light);font-size:.7rem;letter-spacing:.25em;}
+
+  /* Scroll reveal */
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity 1s, transform 1s;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* Price strike */
+  .strike{text-decoration:line-through;text-decoration-color:rgba(255,80,80,.7);}
+
+  /* Cart drawer */
+  #cartDrawer{transition:transform .5s cubic-bezier(.77,0,.175,1);}
+  #cartDrawer.open{transform:translateX(0)!important;}
+
+  /* Neon heading underline */
+  .neon-line{height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--cyan),transparent);box-shadow:0 0 10px rgba(212,175,55,.5);}
+
+  /* Rotating 3D logo cube */
+  .logo-cube{width:44px;height:44px;position:relative;transform-style:preserve-3d;animation:rotateCube 12s linear infinite;}
+  .logo-cube div{position:absolute;inset:0;border:1px solid var(--gold);background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,229,255,.08));box-shadow:inset 0 0 20px rgba(212,175,55,.25);}
+  .logo-cube .f1{transform:translateZ(22px);}
+  .logo-cube .f2{transform:rotateY(180deg) translateZ(22px);}
+  .logo-cube .f3{transform:rotateY(90deg) translateZ(22px);}
+  .logo-cube .f4{transform:rotateY(-90deg) translateZ(22px);}
+  .logo-cube .f5{transform:rotateX(90deg) translateZ(22px);}
+  .logo-cube .f6{transform:rotateX(-90deg) translateZ(22px);}
+  @keyframes rotateCube{from{transform:rotateX(0) rotateY(0);}to{transform:rotateX(360deg) rotateY(360deg);}}
+
+  /* Glow pulse */
+  @keyframes pulseGold{0%,100%{box-shadow:0 0 20px rgba(212,175,55,.3);}50%{box-shadow:0 0 40px rgba(212,175,55,.7);}}
+  .pulse-gold{animation:pulseGold 3s ease-in-out infinite;}
+
+  /* Discount banner */
+  .disc-banner{background:linear-gradient(90deg,rgba(212,175,55,.12),rgba(0,229,255,.08),rgba(212,175,55,.12));border-top:1px solid rgba(212,175,55,.3);border-bottom:1px solid rgba(212,175,55,.3);}
+
+  /* Category pill */
+  .cat-pill{transition:all .3s;border:1px solid rgba(255,255,255,.08);}
+  .cat-pill:hover,.cat-pill.active{border-color:var(--gold);background:rgba(212,175,55,.08);color:var(--gold-light);box-shadow:0 0 20px rgba(212,175,55,.15);}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:#0a0b10;}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--gold),var(--cyan));border-radius:4px;}
+
+  /* Floating particles text */
+  .sparkle{position:absolute;color:var(--gold);font-size:10px;pointer-events:none;animation:floatUp 2s ease-out forwards;}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-80px) scale(.5);}}
+
+  /* Product image sheen */
+  .img-sheen{position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.12) 50%,transparent 60%);transform:translateX(-100%);transition:transform .8s;}
+  .tilt-card:hover .img-sheen{transform:translateX(100%);}
+
+  /* Mobile */
+  @media (max-width:768px){
+    html,body{cursor:auto;}
+    .cursor-dot,.cursor-ring{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div class="cursor-dot" id="cDot"></div>
+<div class="cursor-ring" id="cRing"></div>
+
+<!-- 3D Background -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Orbs & Grid -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="grid-overlay"></div>
+
+<!-- ============ CONTENT ============ -->
+<div class="content">
+
+<!-- TOP DISCOUNT BANNER -->
+<div class="disc-banner py-2 text-center text-xs tracking-[0.3em] text-[color:var(--gold-light)]">
+  ✦ GRAND LAUNCH • FLAT 10% OFF SITEWIDE • CODE: <span class="font-bold">NEXORA10</span> • FREE SHIPPING ABOVE ₹1999 ✦
+</div>
+
+<!-- NAV -->
+<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[rgba(5,6,10,.6)] border-b border-[rgba(212,175,55,.15)]">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-3">
+      <div class="logo-cube"><div class="f1"></div><div class="f2"></div><div class="f3"></div><div class="f4"></div><div class="f5"></div><div class="f6"></div></div>
+      <div>
+        <div class="font-display text-2xl logo-text font-black">NEXORA</div>
+        <div class="text-[9px] tracking-[0.4em] text-[color:var(--cyan)] -mt-1">LUXE · MERCH · 2099</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm tracking-widest text-gray-300">
+      <a href="#home" class="hover:text-[color:var(--gold-light)] transition">HOME</a>
+      <a href="#shop" class="hover:text-[color:var(--gold-light)] transition">SHOP</a>
+      <a href="#collections" class="hover:text-[color:var(--gold-light)] transition">COLLECTIONS</a>
+      <a href="#about" class="hover:text-[color:var(--gold-light)] transition">LEGACY</a>
+      <a href="#contact" class="hover:text-[color:var(--gold-light)] transition">CONTACT</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <button class="text-gray-300 hover:text-[color:var(--gold-light)]" title="Search">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <button onclick="toggleCart()" class="relative text-gray-300 hover:text-[color:var(--gold-light)]" title="Cart">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h9.2a2 2 0 0 0 2-1.6L23 6H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+        <span id="cartCount" class="absolute -top-2 -right-2 bg-[color:var(--gold)] text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="home" class="relative min-h-[92vh] flex items-center overflow-hidden">
+  <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0" style="background:radial-gradient(ellipse at 30% 40%, rgba(212,175,55,.15), transparent 50%),radial-gradient(ellipse at 70% 60%, rgba(0,229,255,.12), transparent 55%);"></div>
+  </div>
+  <div class="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center relative z-10">
+    <div class="reveal">
+      <div class="inline-flex items-center gap-2 tag-gold px-4 py-1.5 rounded-full mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--gold)] animate-pulse"></span>
+        NEW DROP · AUTUMN EDITION
+      </div>
+      <h1 class="font-display text-5xl md:text-7xl font-black leading-[1.05] mb-6">
+        <span class="block text-white">WEAR THE</span>
+        <span class="block logo-text">FUTURE.</span>
+        <span class="block text-gray-400 text-3xl md:text-4xl font-light mt-2 font-serif italic">Crafted for the elite.</span>
+      </h1>
+      <p class="text-gray-400 max-w-md mb-8 leading-relaxed">
+        NEXORA is a dimension where luxury meets tomorrow. Premium merchandise engineered with obsessive detail, limited runs, and an aura you can feel.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#shop" class="btn-gold px-8 py-4 text-sm font-display">EXPLORE COLLECTION →</a>
+        <a href="#about" class="btn-outline px-8 py-4 text-sm font-display">OUR STORY</a>
+      </div>
+      <div class="mt-12 grid grid-cols-3 gap-6 max-w-md">
+        <div><div class="font-display text-3xl logo-text font-black">10K+</div><div class="text-[10px] tracking-[0.3em] text-gray-500 mt-1">HAPPY CLIENTS</div></div>
+        <div><div class="font-display text-3xl logo-text font-black">50+</div><div class="text-[10px] tracking-[0.3em] text-gray-500 mt-1">DESIGNS</div></div>
+        <div><div class="font-display text-3xl logo-text font-black">4.9★</div><div class="text-[10px] tracking-[0.3em] text-gray-500 mt-1">RATED LUXE</div></div>
+      </div>
+    </div>
+
+    <!-- Hero slider -->
+    <div class="reveal relative h-[520px] perspective-[1000px]">
+      <div class="relative w-full h-full rounded-2xl overflow-hidden glass pulse-gold" style="transform:rotateY(-6deg) rotateX(4deg);">
+        <div id="heroSlider" class="relative w-full h-full">
+          <div class="slide active">
+            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900" alt="Tee" class="w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+              <div class="text-[10px] tracking-[0.4em] text-[color:var(--cyan)] mb-1">FEATURED · 01</div>
+              <div class="font-display text-2xl text-white">NEBULA TEE</div>
+              <div class="text-gray-300 text-sm">Cosmic cotton · Unisex</div>
+            </div>
+          </div>
+          <div class="slide">
+            <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900" alt="Hoodie" class="w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+              <div class="text-[10px] tracking-[0.4em] text-[color:var(--cyan)] mb-1">FEATURED · 02</div>
+              <div class="font-display text-2xl text-white">PHANTOM HOODIE</div>
+              <div class="text-gray-300 text-sm">Heavyweight fleece</div>
+            </div>
+          </div>
+          <div class="slide">
+            <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=900" alt="Backpack" class="w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+              <div class="text-[10px] tracking-[0.4em] text-[color:var(--cyan)] mb-1">FEATURED · 03</div>
+              <div class="font-display text-2xl text-white">VORTEX PACK</div>
+              <div class="text-gray-300 text-sm">Ballistic · 28L</div>
+            </div>
+          </div>
+          <div class="slide">
+            <img src="https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=900" alt="Cap" class="w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+              <div class="text-[10px] tracking-[0.4em] text-[color:var(--cyan)] mb-1">FEATURED · 04</div>
+              <div class="font-display text-2xl text-white">ECLIPSE CAP</div>
+              <div class="text-gray-300 text-sm">6-panel · Adjustable</div>
+            </div>
+          </div>
+        </div>
+        <!-- Dots -->
+        <div class="absolute bottom-6 right-6 flex gap-2 z-20">
+          <button class="dot w-8 h-1 bg-white/30" data-i="0"></button>
+          <button class="dot w-8 h-1 bg-white/30" data-i="1"></button>
+          <button class="dot w-8 h-1 bg-white/30" data-i="2"></button>
+          <button class="dot w-8 h-1 bg-white/30" data-i="3"></button>
+        </div>
+        <!-- Corner accents -->
+        <div class="absolute top-3 left-3 w-6 h-6 border-t border-l border-[color:var(--gold)]"></div>
+        <div class="absolute top-3 right-3 w-6 h-6 border-t border-r border-[color:var(--gold)]"></div>
+        <div class="absolute bottom-3 left-3 w-6 h-6 border-b border-l border-[color:var(--gold)]"></div>
+        <div class="absolute bottom-3 right-3 w-6 h-6 border-b border-r border-[color:var(--gold)]"></div>
+      </div>
+      <!-- Floating price tag -->
+      <div class="absolute -bottom-6 -left-6 glass px-5 py-3 rounded-xl" style="transform:rotateY(12deg) rotateX(-8deg);">
+        <div class="text-[9px] tracking-[0.3em] text-gray-400">STARTING FROM</div>
+        <div class="font-display text-xl logo-text font-black">₹ 499</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee py-4 my-6">
+  <div class="marquee-track font-display text-xl text-[color:var(--gold-light)]">
+    ✦ LUXURY MERCHANDISE ✦ HANDCRAFTED IN INDIA ✦ LIMITED EDITION ✦ 10% OFF WITH CODE NEXORA10 ✦ FREE SHIPPING ✦ LUXURY MERCHANDISE ✦ HANDCRAFTED IN INDIA ✦ LIMITED EDITION ✦ 10% OFF WITH CODE NEXORA10 ✦ FREE SHIPPING ✦&nbsp;&nbsp;&nbsp;
+    ✦ LUXURY MERCHANDISE ✦ HANDCRAFTED IN INDIA ✦ LIMITED EDITION ✦ 10% OFF WITH CODE NEXORA10 ✦ FREE SHIPPING ✦ LUXURY MERCHANDISE ✦ HANDCRAFTED IN INDIA ✦ LIMITED EDITION ✦ 10% OFF WITH CODE NEXORA10 ✦ FREE SHIPPING ✦&nbsp;&nbsp;&nbsp;
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section id="collections" class="max-w-7xl mx-auto px-6 py-20 reveal">
+  <div class="text-center mb-12">
+    <div class="text-[10px] tracking-[0.5em] text-[color:var(--cyan)] mb-3">— BROWSE THE VAULT —</div>
+    <h2 class="font-display text-4xl md:text-5xl font-black mb-3">THE <span class="logo-text">COLLECTIONS</span></h2>
+    <div class="neon-line w-24 mx-auto"></div>
+  </div>
+  <div class="flex flex-wrap justify-center gap-3" id="catFilters">
+    <button class="cat-pill active px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="all">ALL</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="T-Shirts">T-SHIRTS</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="Hoodies">HOODIES</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="Bags">SCHOOL BAGS</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="Caps">CAPS</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="Stationery">STATIONERY</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="Bottles">WATER BOTTLES</button>
+    <button class="cat-pill px-5 py-2.5 rounded-full text-xs font-display tracking-[0.2em]" data-cat="ID">ID ACCESSORIES</button>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="shop" class="max-w-7xl mx-auto px-6 pb-24">
+  <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+</section>
+
+<!-- FEATURES -->
+<section class="py-24 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-6 reveal">
+    <div class="glass p-8 rounded-2xl text-center">
+      <div class="text-4xl mb-3">🚀</div>
+      <div class="font-display text-sm tracking-widest text-[color:var(--gold-light)]">EXPRESS SHIPPING</div>
+      <div class="text-xs text-gray-400 mt-2">Pan-India · 2–4 days</div>
+    </div>
+    <div class="glass p-8 rounded-2xl text-center">
+      <div class="text-4xl mb-3">💎</div>
+      <div class="font-display text-sm tracking-widest text-[color:var(--gold-light)]">PREMIUM QUALITY</div>
+      <div class="text-xs text-gray-400 mt-2">Handpicked materials</div>
+    </div>
+    <div class="glass p-8 rounded-2xl text-center">
+      <div class="text-4xl mb-3">🔒</div>
+      <div class="font-display text-sm tracking-widest text-[color:var(--gold-light)]">SECURE CHECKOUT</div>
+      <div class="text-xs text-gray-400 mt-2">UPI · Cards · COD</div>
+    </div>
+    <div class="glass p-8 rounded-2xl text-center">
+      <div class="text-4xl mb-3">♾️</div>
+      <div class="font-display text-sm tracking-widest text-[color:var(--gold-light)]">EASY RETURNS</div>
+      <div class="text-xs text-gray-400 mt-2">7 day return window</div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT / LEGACY -->
+<section id="about" class="max-w-5xl mx-auto px-6 py-24 text-center reveal">
+  <div class="text-[10px] tracking-[0.5em] text-[color:var(--cyan)] mb-3">— OUR LEGACY —</div>
+  <h2 class="font-serif italic text-4xl md:text-5xl text-white mb-6">"Where fabric meets <span class="logo-text not-italic font-sans font-display">future</span>."</h2>
+  <p class="text-gray-400 leading-relaxed max-w-3xl mx-auto">
+    Born in the quiet studios of Bengaluru, NEXORA is more than merchandise — it's a manifesto. Every stitch, every thread, every curve is engineered for those who refuse the ordinary. We blend Indian craftsmanship with futuristic design to build heirloom-grade gear for the next generation.
+  </p>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact" class="border-t border-[rgba(212,175,55,.15)] bg-[rgba(5,6,10,.7)] backdrop-blur">
+  <div class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-10">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="logo-cube" style="width:32px;height:32px;"><div class="f1" style="transform:translateZ(16px)"></div><div class="f2" style="transform:rotateY(180deg) translateZ(16px)"></div><div class="f3" style="transform:rotateY(90deg) translateZ(16px)"></div><div class="f4" style="transform:rotateY(-90deg) translateZ(16px)"></div><div class="f5" style="transform:rotateX(90deg) translateZ(16px)"></div><div class="f6" style="transform:rotateX(-90deg) translateZ(16px)"></div></div>
+        <div class="font-display text-xl logo-text font-black">NEXORA</div>
+      </div>
+      <p class="text-xs text-gray-500 leading-relaxed">Luxury merchandise engineered for the next century. Made in India · Loved worldwide.</p>
+    </div>
+    <div>
+      <div class="font-display text-xs tracking-[0.3em] text-[color:var(--gold-light)] mb-4">SHOP</div>
+      <ul class="space-y-2 text-sm text-gray-400">
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">T-Shirts</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">Hoodies</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">School Bags</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">Caps & Bottles</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-display text-xs tracking-[0.3em] text-[color:var(--gold-light)] mb-4">SUPPORT</div>
+      <ul class="space-y-2 text-sm text-gray-400">
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">Shipping</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">Returns</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">FAQ</a></li>
+        <li><a href="#" class="hover:text-[color:var(--gold-light)]">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-display text-xs tracking-[0.3em] text-[color:var(--gold-light)] mb-4">NEWSLETTER</div>
+      <p class="text-xs text-gray-400 mb-3">Join the NEXORA inner circle.</p>
+      <div class="flex">
+        <input type="email" placeholder="you@email.com" class="flex-1 bg-white/5 border border-[rgba(212,175,55,.3)] px-3 py-2 text-xs rounded-l-lg outline-none focus:border-[color:var(--gold)]"/>
+        <button class="btn-gold px-4 py-2 text-xs font-display rounded-r-lg">JOIN</button>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-[rgba(212,175,55,.1)] py-6 text-center text-[10px] tracking-[0.3em] text-gray-500">
+    © 2099 NEXORA LUXE · ALL RIGHTS RESERVED · CRAFTED IN BHARAT 🇮🇳
+  </div>
+</footer>
+</div>
+
+<!-- CART DRAWER -->
+<div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] hidden"></div>
+<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#0a0b12] border-l border-[rgba(212,175,55,.2)] z-[70] translate-x-full flex flex-col">
+  <div class="p-6 border-b border-[rgba(212,175,55,.15)] flex items-center justify-between">
+    <div>
+      <div class="font-display text-xl logo-text font-black">YOUR CART</div>
+      <div class="text-[10px] tracking-[0.3em] text-gray-500">LUXURY SELECTION</div>
+    </div>
+    <button onclick="toggleCart()" class="text-gray-400 hover:text-white text-2xl">×</button>
+  </div>
+  <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+  <div class="border-t border-[rgba(212,175,55,.15)] p-6 space-y-3">
+    <div class="flex justify-between text-sm text-gray-400"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+    <div class="flex justify-between text-sm text-[color:var(--cyan)]"><span>Discount (10%)</span><span id="discount">-₹0</span></div>
+    <div class="flex justify-between text-sm text-gray-400"><span>Shipping</span><span class="text-[color:var(--gold-light)]">FREE</span></div>
+    <div class="h-px bg-gradient-to-r from-transparent via-[color:var(--gold)] to-transparent my-2"></div>
+    <div class="flex justify-between items-center">
+      <span class="font-display tracking-widest text-sm text-white">TOTAL</span>
+      <span id="total" class="font-display text-2xl logo-text font-black">₹0</span>
+    </div>
+    <button onclick="checkout()" class="btn-gold w-full py-4 font-display text-sm">CHECKOUT SECURELY →</button>
+    <p class="text-[10px] text-center text-gray-500 tracking-widest">🔒 SECURE · UPI · CARDS · COD</p>
+  </div>
+</aside>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-sm z-[80] opacity-0 pointer-events-none transition-opacity duration-300">
+  <span id="toastText">Added to cart</span>
+</div>
+
+<script>
+/* ============ PRODUCTS ============ */
+const PRODUCTS = [
+  {id:1,name:"Nebula Tee",cat:"T-Shirts",price:899,old:999,img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800",desc:"Premium 240 GSM cotton, cosmic print, unisex fit. Limited drop."},
+  {id:2,name:"Quantum Black Tee",cat:"T-Shirts",price:799,old:899,img:"https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800",desc:"Jet-black oversized tee with reflective logo. Built for nights."},
+  {id:3,name:"Phantom Hoodie",cat:"Hoodies",price:2499,old:2799,img:"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800",desc:"Heavyweight fleece hoodie · 480 GSM · Embroidered crest."},
+  {id:4,name:"Cosmic Zip Hoodie",cat:"Hoodies",price:2799,old:3099,img:"https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800",desc:"Full-zip galaxy print · Kangaroo pocket · Ribbed cuffs."},
+  {id:5,name:"Vortex Backpack",cat:"Bags",price:3499,old:3899,img:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",desc:"28L ballistic nylon · Laptop sleeve · Weather-resistant."},
+  {id:6,name:"Aether School Satchel",cat:"Bags",price:2999,old:3299,img:"https://images.unsplash.com/photo-1577733966973-d680bffd2e80?w=800",desc:"Ergonomic school bag · 35L · Anti-theft zippers · USB port."},
+  {id:7,name:"Eclipse Cap",cat:"Caps",price:599,old:699,img:"https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800",desc:"6-panel washed cotton · Curved visor · Adjustable strap."},
+  {id:8,name:"Orbit Snapback",cat:"Caps",price:699,old:799,img:"https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=800",desc:"Flat-brim snapback · 3D embroidered logo · One size."},
+  {id:9,name:"Lumen Pen Set",cat:"Stationery",price:499,old:599,img:"https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=800",desc:"Metal body gel pens · Set of 5 · Gold-foil engraved box."},
+  {id:10,name:"Prism Notebook",cat:"Stationery",price:399,old:499,img:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=800",desc:"A5 · 200 pages · 100 GSM ivory paper · Holographic cover."},
+  {id:11,name:"Hydro Flux Bottle",cat:"Bottles",price:1299,old:1499,img:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800",desc:"750ml stainless · 24hr cold / 12hr hot · Leak-proof."},
+  {id:12,name:"Cryo Insulated Flask",cat:"Bottles",price:1599,old:1799,img:"https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800",desc:"1L vacuum flask · Matte gold finish · Eco-certified."},
+  {id:13,name:"Aura Lanyard",cat:"ID",price:249,old:299,img:"https://images.unsplash.com/photo-1586281010691-f8cc6a98d08c?w=800",desc:"Woven polyester lanyard · Breakaway clasp · NEXORA print."},
+  {id:14,name:"Nova Card Holder",cat:"ID",price:499,old:599,img:"https://images.unsplash.com/photo-1627123424574-724758594e93?w=800",desc:"Aluminium ID card holder · Retractable reel · RFID-safe."},
+];
+
+const INR = n => '₹' + n.toLocaleString('en-IN');
+
+/* ============ RENDER PRODUCTS ============ */
+const grid = document.getElementById('productGrid');
+function renderProducts(filter='all'){
+  grid.innerHTML = '';
+  const list = filter==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===filter);
+  list.forEach((p,i)=>{
+    const card = document.createElement('div');
+    card.className = 'tilt-card reveal';
+    card.style.transitionDelay = (i*60)+'ms';
+    card.innerHTML = `
+      <div class="tilt-inner glass rounded-2xl overflow-hidden relative group">
+        <div class="relative h-72 overflow-hidden bg-black">
+          <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pop"/>
+          <div class="img-sheen"></div>
+          <div class="absolute top-3 left-3 tag-gold px-3 py-1 rounded-full pop2">${p.cat.toUpperCase()}</div>
+          <div class="absolute top-3 right-3 bg-red-500/90 text-white text-[10px] tracking-widest px-2 py-1 rounded-full pop2">-10%</div>
+          <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="text-[10px] text-gray-300">Quick View · Tap to add</div>
+          </div>
+        </div>
+        <div class="p-5 pop">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="font-display text-lg text-white">${p.name}</div>
+              <div class="text-[10px] tracking-[0.25em] text-gray-500">NEXORA · ${p.cat.toUpperCase()}</div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mb-4 leading-relaxed min-h-[34px]">${p.desc}</p>
+          <div class="flex items-end justify-between">
+            <div>
+              <div class="font-display text-2xl logo-text font-black">${INR(p.price)}</div>
+              <div class="text-xs text-gray-500 strike">${INR(p.old)}</div>
+            </div>
+            <button onclick="addToCart(${p.id}, event)" class="btn-gold px-4 py-2.5 text-[10px] font-display tracking-widest">+ ADD</button>
+          </div>
+        </div>
+        <!-- corner accents -->
+        <div class="absolute top-2 left-2 w-4 h-4 border-t border-l border-[color:var(--gold)] opacity-50"></div>
+        <div class="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-[color:var(--gold)] opacity-50"></div>
+      </div>
+    `;
+    grid.appendChild(card);
+    attachTilt(card);
+    setTimeout(()=>card.classList.add('in'),100+i*60);
+  });
+}
+renderProducts();
+
+/* ============ 3D TILT ============ */
+function attachTilt(card){
+  card.addEventListener('mousemove',e=>{
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX-r.left)/r.width - .5;
+    const y = (e.clientY-r.top)/r.height - .5;
+    card.style.transform = `perspective(900px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateZ(10px)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+}
+
+/* ============ CATEGORY FILTER ============ */
+document.querySelectorAll('#catFilters .cat-pill').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#catFilters .cat-pill').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderProducts(b.dataset.cat);
+  });
+});
+
+/* ============ CART ============ */
+let cart = [];
+function addToCart(id, event){
+  const p = PRODUCTS.find(x=>x.id===id);
+  const existing = cart.find(x=>x.id===id);
+  if(existing) existing.qty++;
+  else cart.push({...p,qty:1});
+  updateCart();
+  showToast(`${p.name} added ✓`);
+  // sparkle
+  if(event){
+    for(let i=0;i<6;i++){
+      const s = document.createElement('span');
+      s.className='sparkle';s.textContent='✦';
+      s.style.left=(event.clientX+(Math.random()*40-20))+'px';
+      s.style.top=(event.clientY)+'px';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(),2000);
+    }
+  }
+}
+function removeItem(id){cart = cart.filter(x=>x.id!==id);updateCart();}
+function changeQty(id,d){
+  const it = cart.find(x=>x.id===id);
+  if(!it) return;
+  it.qty += d;
+  if(it.qty<=0) cart = cart.filter(x=>x.id!==id);
+  updateCart();
+}
+function updateCart(){
+  document.getElementById('cartCount').textContent = cart.reduce((a,b)=>a+b.qty,0);
+  const box = document.getElementById('cartItems');
+  if(cart.length===0){
+    box.innerHTML = `<div class="text-center py-20 text-gray-500"><div class="text-5xl mb-4">🛍️</div><div class="text-xs tracking-widest">YOUR VAULT IS EMPTY</div></div>`;
+  } else {
+    box.innerHTML = cart.map(it=>`
+      <div class="glass rounded-xl p-3 flex gap-3 items-center">
+        <img src="${it.img}" class="w-16 h-16 object-cover rounded-lg"/>
+        <div class="flex-1">
+          <div class="font-display text-sm text-white">${it.name}</div>
+          <div class="text-[10px] text-gray-500">${INR(it.price)} × ${it.qty}</div>
+          <div class="flex gap-2 mt-2">
+            <button onclick="changeQty(${it.id},-1)" class="w-6 h-6 bg-white/5 rounded hover:bg-white/10">−</button>
+            <button onclick="changeQty(${it.id},1)" class="w-6 h-6 bg-white/5 rounded hover:bg-white/10">+</button>
+            <button onclick="removeItem(${it.id})" class="text-[10px] text-red-400 ml-auto tracking-widest">REMOVE</button>
+          </div>
+        </div>
+        <div class="font-display text-sm logo-text">${INR(it.price*it.qty)}</div>
+      </div>
+    `).join('');
+  }
+  const sub = cart.reduce((a,b)=>a+b.price*b.qty,0);
+  const disc = Math.round(sub*0.1);
+  document.getElementById('subtotal').textContent = INR(sub);
+  document.getElementById('discount').textContent = '-'+INR(disc);
+  document.getElementById('total').textContent = INR(sub-disc);
+}
+function toggleCart(){
+  const d = document.getElementById('cartDrawer');
+  const o = document.getElementById('cartOverlay');
+  d.classList.toggle('open');
+  o.classList.toggle('hidden');
+}
+function checkout(){
+  if(cart.length===0){showToast('Cart is empty');return;}
+  showToast('Redirecting to secure checkout… 🔒');
+  setTimeout(()=>{
+    alert('✨ Thank you for shopping at NEXORA!\n\nThis is a demo checkout.\nYour 10% discount has been applied.');
+  },500);
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  t.style.opacity = 1;
+  clearTimeout(window._tt);
+  window._tt = setTimeout(()=>t.style.opacity=0,2000);
+}
+updateCart();
+
+/* ============ HERO SLIDER ============ */
+let slideIdx = 0;
+const slides = document.querySelectorAll('#heroSlider .slide');
+const dots = document.querySelectorAll('.dot');
+function showSlide(i){
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  dots.forEach((d,k)=>{
+    d.style.background = k===i ? 'var(--gold)' : 'rgba(255,255,255,.3)';
+  });
+}
+dots.forEach(d=>d.addEventListener('click',()=>{slideIdx=+d.dataset.i;showSlide(slideIdx);}));
+setInterval(()=>{slideIdx=(slideIdx+1)%slides.length;showSlide(slideIdx);},4000);
+
+/* ============ REVEAL ON SCROLL ============ */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ============ CUSTOM CURSOR ============ */
+const cdot = document.getElementById('cDot');
+const cring = document.getElementById('cRing');
+let mx=0,my=0,rx=0,ry=0;
+window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cdot.style.left=mx+'px';cdot.style.top=my+'px';});
+(function loop(){rx+=(mx-rx)*.15;ry+=(my-ry)*.15;cring.style.left=rx+'px';cring.style.top=ry+'px';requestAnimationFrame(loop);})();
+document.addEventListener('mouseover',e=>{
+  if(e.target.closest('button,a,.tilt-card,input')) cring.classList.add('hover');
+});
+document.addEventListener('mouseout',e=>{
+  if(e.target.closest('button,a,.tilt-card,input')) cring.classList.remove('hover');
+});
+
+/* ============ THREE.JS 3D BACKGROUND ============ */
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, .1, 1000);
+  camera.position.z = 50;
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth,window.innerHeight);
+
+  // Particles
+  const pcount = 1200;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(pcount*3);
+  const col = new Float32Array(pcount*3);
+  for(let i=0;i<pcount;i++){
+    pos[i*3] = (Math.random()-.5)*150;
+    pos[i*3+1] = (Math.random()-.5)*150;
+    pos[i*3+2] = (Math.random()-.5)*150;
+    // mix gold + cyan colors
+    const r = Math.random();
+    if(r<.5){col[i*3]=.83;col[i*3+1]=.68;col[i*3+2]=.22;}
+    else if(r<.85){col[i*3]=0;col[i*3+1]=.9;col[i*3+2]=1;}
+    else{col[i*3]=1;col[i*3+1]=1;col[i*3+2]=1;}
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const mat = new THREE.PointsMaterial({size:.35, vertexColors:true, transparent:true, opacity:.85, blending:THREE.AdditiveBlending, depthWrite:false});
+  const points = new THREE.Points(geo,mat);
+  scene.add(points);
+
+  // Wireframe torus
+  const torusGeo = new THREE.TorusGeometry(14,3,16,80);
+  const torusMat = new THREE.MeshBasicMaterial({color:0xd4af37, wireframe:true, transparent:true, opacity:.18});
+  const torus = new THREE.Mesh(torusGeo,torusMat);
+  torus.position.set(25,-10,-15);
+  scene.add(torus);
+
+  // Icosahedron
+  const icoGeo = new THREE.IcosahedronGeometry(8,0);
+  const icoMat = new THREE.MeshBasicMaterial({color:0x00e5ff, wireframe:true, transparent:true, opacity:.22});
+  const ico = new THREE.Mesh(icoGeo,icoMat);
+  ico.position.set(-28,12,-20);
+  scene.add(ico);
+
+  // Second torus (smaller)
+  const torus2Geo = new THREE.TorusKnotGeometry(5,1.5,80,12);
+  const torus2Mat = new THREE.MeshBasicMaterial({color:0xffd700, wireframe:true, transparent:true, opacity:.15});
+  const torus2 = new THREE.Mesh(torus2Geo,torus2Mat);
+  torus2.position.set(0,20,-25);
+  scene.add(torus2);
+
+  let mxs=0,mys=0;
+  window.addEventListener('mousemove',e=>{
+    mxs = (e.clientX/window.innerWidth-.5)*.4;
+    mys = (e.clientY/window.innerHeight-.5)*.4;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    points.rotation.y += .0008;
+    points.rotation.x += .0003;
+    torus.rotation.x += .004;
+    torus.rotation.y += .006;
+    ico.rotation.x += .005;
+    ico.rotation.y -= .004;
+    torus2.rotation.x += .003;
+    torus2.rotation.z += .005;
+    camera.position.x += (mxs*8 - camera.position.x)*.03;
+    camera.position.y += (-mys*8 - camera.position.y)*.03;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
